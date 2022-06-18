@@ -1,5 +1,5 @@
 class ApplicationController < Sinatra::Base
-  set :default_content_type, 'application/json'
+  set :default_content_type, :json
 
   get '/games' do
     games = Game.all.order(:title).limit(10)
@@ -9,11 +9,31 @@ class ApplicationController < Sinatra::Base
   get '/games/:id' do
     game = Game.find(params[:id])
 
-    game.to_json(only: [:id, :title, :genre, :price], include: {
-      reviews: { only: [:comment, :score], include: {
-        user: { only: [:name] }
-      } }
-    })
+    game.to_json(
+      only: [:id, :title, :genre, :price],
+      include: {
+        reviews: {
+          only: [:comment, :score],
+          include: { user: { only: [:name] } }
+        }
+      }
+    )
   end
 
+  patch '/reviews/:id' do
+    review = Review.find(params[:id])
+    review.update(score: params[:score], comment: params[:comment])
+    review.to_json
+  end
+
+  delete '/reviews/:id' do
+    review = Review.find(params[:id])
+    review.destroy
+    review.to_json
+  end
+
+  post '/reviews' do
+    review = Review.create(params)
+    review.to_json
+  end
 end
